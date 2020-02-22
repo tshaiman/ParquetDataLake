@@ -75,27 +75,14 @@ services:
       CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
       CONNECT_PLUGIN_PATH: '/usr/share/java,/usr/share/confluent-hub-components,/local-connect-jars'
-      AWS_ACCESS_KEY_ID: "<PUT_YOUR_KEY_HERE>"
-      AWS_SECRET_ACCESS_KEY: "<PUT_YOUR_KEY_HERE>""
-    volumes:
-      - ${PWD}/data/connect-jars:/local-connect-jars
+      AWS_ACCESS_KEY_ID: "<ADD-YOUR-KEY-HERE>"
+      AWS_SECRET_ACCESS_KEY: "<ADD-YOUR-KEY-HERE>"
     command: 
       - /bin/bash
       - -c 
       - |
-        # # JDBC Drivers - download those required
-        # # ------------
-        # # MySQL
-        cd /usr/share/java/kafka-connect-jdbc/
-        curl https://cdn.mysql.com/Downloads/Connector-J/mysql-connector-java-8.0.18.tar.gz | tar xz 
-        # # MS SQL
-        # cd /usr/share/java/kafka-connect-jdbc/
-        # curl http://central.maven.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.0.0.jre8/mssql-jdbc-7.0.0.jre8.jar --output mssql-jdbc-7.0.0.jre8.jar
-        #
-        echo "Installing Connector"
-        confluent-hub install --no-prompt confluentinc/kafka-connect-datagen:0.1.5
-        confluent-hub install --no-prompt debezium/debezium-connector-mysql:0.10.0        
-        confluent-hub install --no-prompt debezium/debezium-connector-postgresql:0.10.0
+       echo "Installing Connector"
+       confluent-hub install --no-prompt confluentinc/kafka-connect-datagen:0.2.0
 
         # Now launch Kafka Connect
         /etc/confluent/docker/run &
@@ -110,82 +97,26 @@ services:
           echo -e $$(date) " Schema Registry listener HTTP state: " $$(curl -s -o /dev/null -w %{http_code} http://schema-registry:8081) " (waiting for != 000)"
           sleep 5 
         done
-        #
+        
         echo "Creating connector"
         curl -s -X PUT -H  "Content-Type:application/json" http://localhost:8083/connectors/source-datagen-item_details_01/config \
             -d '{
             "connector.class": "io.confluent.kafka.connect.datagen.DatagenConnector",
-            "key.converter": "org.apache.kafka.connect.storage.StringConverter",
             "kafka.topic": "ratings",
-            "max.interval":250,
+            "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+            "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+            "value.converter.schemas.enable": "false",
+            "max.interval":250, 
+            "iterations": 10000000,
+            "tasks.max": "1",
             "quickstart": "ratings"
           }'
-        # echo -e "\n--\n+> Creating Kafka Connect JDBC Source"
-        # curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json" -d '{
-        #           "name": "jdbc_source_mysql_00",
-        #           "config": {
-        #                   "connector.class": "io.confluent.connect.jdbc.JdbcSourceConnector",
-        #                   "connection.url": "jdbc:mysql://mysql:3306/demo",
-        #                   "connection.user": "connect_user",
-        #                   "connection.password": "asgard",
-        #                   "topic.prefix": "mysql-00-",
-        #                   "poll.interval.ms": 1000,
-        #                   "tasks.max":1,
-        #                   "mode":"timestamp",
-        #                   "table.whitelist" : "demo.customers",
-        #                   "timestamp.column.name": "UPDATE_TS",
-        #                   "validate.non.null": false
-        #                   }
-        #           }'
-        # #
-        # echo -e "\n--\n+> Creating Kafka Connect Debezium source (1)"
-        # curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json" -d '{
-        #       "name": "debezium-source-customers-00",
-        #       "config": {
-        #             "connector.class": "io.debezium.connector.mysql.MySqlConnector",
-        #             "database.hostname": "mysql",
-        #             "database.port": "3306",
-        #             "database.user": "debezium",
-        #             "database.password": "dbz",
-        #             "database.server.id": "42",
-        #             "database.server.name": "asgard",
-        #             "table.whitelist": "demo.customers",
-        #             "database.history.kafka.bootstrap.servers": "kafka:29092",
-        #             "database.history.kafka.topic": "dbhistory.demo" ,
-        #             "include.schema.changes": "true"
-        #       }
-        #     }'
-        # echo -e "\n--\n+> Creating Kafka Connect Debezium source (2)"
-        # # curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json" -d '{
-        # #       "name": "debezium-source-customers-00-unwrap",
-        # #       "config": {
-        # #             "connector.class": "io.debezium.connector.mysql.MySqlConnector",
-        # #             "database.hostname": "mysql",
-        # #             "database.port": "3306",
-        # #             "database.user": "debezium",
-        # #             "database.password": "dbz",
-        # #             "database.server.id": "4242",
-        # #             "database.server.name": "asgard",
-        # #             "table.whitelist": "demo.customers",
-        # #             "database.history.kafka.bootstrap.servers": "kafka:29092",
-        # #             "database.history.kafka.topic": "dbhistory.demo" ,
-        # #             "include.schema.changes": "true",
-        # #             "transforms": "unwrap,addTopicSuffix",
-        # #             "transforms.unwrap.type": "io.debezium.transforms.UnwrapFromEnvelope",
-        # #             "transforms.addTopicSuffix.type":"org.apache.kafka.connect.transforms.RegexRouter",
-        # #             "transforms.addTopicSuffix.regex":"(.*)",
-        # #             "transforms.addTopicSuffix.replacement":"$$1-unwrap"
-        # #       }
-        # #     }'
-        # # "transforms.key.type": "org.apache.kafka.connect.transforms.ExtractField$$Key",
-        # # "transforms.key.field": "id",
-        # #
-        # Don't let the container die
+        
+        ## Don't let the container die
         sleep infinity
 
 
   ksql-server:
-    #image: 368821881613.dkr.ecr.us-west-2.amazonaws.com/confluentinc/cp-ksql-server:master-1389
     image: confluentinc/cp-ksql-server:5.4.0
     container_name: ksql-server
     depends_on:

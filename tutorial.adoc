@@ -1,12 +1,11 @@
-= Parquet-Connector Demo
+= Stream-To-Parquet Demo
 Tomer Shaiman <tomer.shaiman@gmail.com>
 v1.00, Feb 11, 2020
 
 
-== Installing Kafka,kafka-connect and schema registry
+== Installing Kafka,zookeeper,kafka-connect , KSQL and schema registry
 
-helm repo add confluentinc https://confluentinc.github.io/cp-helm-charts/
-helm repo update
-helm install cp confluentinc/cp-helm-charts -f values.yml -n cp 
+1. Edit the Kafka Connect env variables and put your own AWS_ACCESS_KEY and AWS_SECRET_ACCESS_KEY
+2. docker-compose up -d
 
 ==========================================
