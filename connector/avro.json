@@ -1,0 +1,34 @@
+{
+  "name": "new-jdbc-tester",
+  "config": 
+  {
+    "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+    "tasks.max":1,
+    "topics.regex": "online-lookup-(.*)",
+    "connection.url":"ANALYTICS_DB",
+    "connection.user": "debezium",
+    "_table.name.format": "${topic}",
+    "connection.password": "ANALYTICS_PASS",
+    "transforms": "unwrap,TimestampConverter,dropPrefix",
+    "transforms.unwrap.type":"io.debezium.transforms.ExtractNewRecordState",
+    "transforms.unwrap.drop.tombstones": "false",
+    "transforms.TimestampConverter.type": "org.apache.kafka.connect.transforms.TimestampConverter$Value",
+    "transforms.TimestampConverter.format": "yyyy-MM-dd'T'HH:mm:ss",
+    "transforms.TimestampConverter.target.type": "Timestamp",
+    "transforms.TimestampConverter.field": "UPDATE_TS",
+    "transforms.dropPrefix.type":"org.apache.kafka.connect.transforms.RegexRouter",  
+    "transforms.dropPrefix.regex":"(.*)-lookup-(.*)",  
+    "transforms.dropPrefix.replacement":"$1-$2",
+    "errors.tolerance": "all",
+    "max.retries": 100,
+    "retry.backoff.ms":5000,
+    "pk.mode": "record_key",
+    "pk.fields": "id",
+    "auto.create": "false",
+    "auto.evolve": "true",
+    "insert.mode": "upsert",
+    "delete.enabled": "true"
+
+  }
+  
+}

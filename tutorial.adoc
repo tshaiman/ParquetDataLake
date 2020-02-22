@@ -1,0 +1,12 @@
+= Parquet-Connector Demo
+Tomer Shaiman <tomer.shaiman@gmail.com>
+v1.00, Feb 11, 2020
+
+
+== Installing Kafka,kafka-connect and schema registry
+
+helm repo add confluentinc https://confluentinc.github.io/cp-helm-charts/
+helm repo update
+helm install cp confluentinc/cp-helm-charts -f values.yml -n cp 
+
+==========================================
