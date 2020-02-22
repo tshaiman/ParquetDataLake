@@ -75,8 +75,8 @@ services:
       CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
       CONNECT_PLUGIN_PATH: '/usr/share/java,/usr/share/confluent-hub-components,/local-connect-jars'
-      AWS_ACCESS_KEY_ID: "<ADD-YOUR-KEY-HERE>"
-      AWS_SECRET_ACCESS_KEY: "<ADD-YOUR-KEY-HERE>"
+      AWS_ACCESS_KEY_ID: "<YOUR KEY HERE>"
+      AWS_SECRET_ACCESS_KEY: "<YOUR KEY HERE>"
     command: 
       - /bin/bash
       - -c 

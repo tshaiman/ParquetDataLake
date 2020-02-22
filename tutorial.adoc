@@ -9,3 +9,41 @@ v1.00, Feb 11, 2020
 2. docker-compose up -d
 
 ==========================================
+CREATE THE KSQL STREAM 
+==========================================
+1. log in to the KSql server
+
+docker exec -it ksql-cli ksql http://ksql-server:8088
+
+2. add the source Json Stream :
+CREATE STREAM source_json (rating_id VARCHAR, user_id VARCHAR, stars INT, route_id VARCHAR, rating_time INT,channel VARCHAR,message VARCHAR) 
+WITH (KAFKA_TOPIC='ratings', VALUE_FORMAT='JSON');
+
+3. add the target avro Stream:
+CREATE STREAM target_avro WITH (KAFKA_TOPIC='ratings_avro',REPLICAS=1,PARTITIONS=1,VALUE_FORMAT='AVRO') AS 
+SELECT * FROM source_json;
+
+4. check that the schema was created 
+curl http://localhost:8081/subjects/ratings_avro-value/versions/latest   
+
+5. check the avro topic 
+kafkacat    -b $KAFKA    \
+-r http://localhost:8081 \
+-s avro                  \
+-t ratings_avro          \
+-C -u -o beginning  -q | jq '.'
+
+6. A better and faster way from KSQL Prompt:
+> print ratings;
+> print ratings_avro;
+
+==========================================
+Add Kafka Connect 
+==========================================
+1. Post a new S3 Sink Connector in Parquet format :
+curl -X POST -H 'Content-Type:application/json' --data @"./s3-parquet-connector.json" http://localhost:8083/connectors/ 
+
+2. inspect the logs :
+docker logs kafka-connect-01 -f 
+
+3. inspect the S3 Bucket and verify it is in parquet format. 
